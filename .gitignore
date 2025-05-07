@@ -1,0 +1,17 @@
+# General
+.DS_Store
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Vite build
+client/dist/
+server/dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
