@@ -18,6 +18,14 @@ export default function App() {
     { name: 'Sydney', coords: [151.2093, -33.8688] },
     { name: 'Dubai', coords: [55.2708, 25.2048] },
   ];
+
+  useEffect(() => {
+    fetch('/api/hello')
+      .then((res) => res.json())
+      .then((data) => console.log('HELLO RESPONSE:', data))
+      .catch((err) => console.error('❌ Proxy not working:', err));
+  }, []);
+
   const fetchPlacesNear = async (lng: number, lat: number, query: string) => {
     const accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
 

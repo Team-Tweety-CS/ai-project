@@ -3,6 +3,8 @@ import cors from 'cors';
 import 'dotenv/config';
 import { queryOpenAIChat } from './controllers/openaiController';
 
+console.log('✅ app.ts is actually running');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
