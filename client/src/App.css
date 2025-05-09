@@ -4,8 +4,14 @@
   box-sizing: border-box;
 }
 
+
+:root {
+  color-scheme: light;
+}
+
+
 .app {
-  min-height: 100vh;
+  height: calc(100vh - 16px);
     display: flex;
     flex-direction: column;
     min-width: 100vw;
@@ -13,14 +19,15 @@
 
 
 .header {
+  height: 120px;
   width: 100%;
     background-color: rgba(245, 245, 220);
     border-bottom: 1px solid #e5e7eb;
 }
 
 .header-img {
-  height: 100px;
-  width: 100px;
+  height: 85px;
+  width: 85px;
 }
 
 .header-container {
@@ -33,7 +40,9 @@
 .page-main {
 flex-grow: 1;
 padding: 1rem;
+padding-bottom: 2rem; /* ensures spacing below map/sidebar */
 background-color: rgba(245, 245, 220);;
+/* overflow:hidden */
 }
 
 
@@ -121,12 +130,19 @@ background-color: rgba(245, 245, 220);;
   padding-inline: 1rem; /* Tailwind's px-4 = 1rem on both sides */
 }
 
+.main-attractions-list {
+  margin-left: 1rem;
+  margin-top: 2rem;
+  color: #333;;
+}
+
 
 .button-container {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
   .button {
@@ -149,10 +165,63 @@ background-color: rgba(245, 245, 220);;
     
     border-radius: 6px; /* rounded-md, 6px is a typical Tailwind value */
     overflow: hidden;
+     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* width: 40%; */
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+
+    /* //background-color: tan; */
   }
   
   .button:hover {
-    background-color: #d1d5db;
+    background-color: rgb(192, 228, 165);
+  }
+
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    background-color: white;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    /* margin-left: 1rem; */
+    /* margin-right: 1rem; */
+    /* margin-bottom: .5rem; */
+  }
+  
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: #333;
+    background-color: transparent;
+  }
+  
+  .search-button {
+    background-color: #888;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .search-button:hover {
+    background-color: #666;
+  }
+  
+  .popup-content {
+    color: black;
+    font-size: 14px;
   }
 
 h1 {
@@ -163,7 +232,22 @@ h1 {
   letter-spacing: 0.05em;
   color: rgb(139, 205, 237);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  /* text-decoration: underline; */
   /* text-shadow: 2px 2px 4px rgba(192, 228, 165, 0.5); */
+}
+
+h2 {
+  font-size: 2rem;
+  display: inline-block;
+  position: relative;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  color: rgb(139, 205, 237);
+  text-shadow:
+    -.5px -.5px 0 white,
+     .5px -.5px 0 white,
+    -.5px  .5px 0 white,
+     .5px  .5px 0 white; /* 4-direction outline */
 }
 
 h1 span {

@@ -9,6 +9,17 @@ import { useRef } from 'react';
 
 export default function App() {
   const [inputValue, setInputValue] = useState('');
+  const [mainAttractionz, setMainAttractionz] = useState<
+    {
+      name: string;
+      reason: string;
+      coordinates: {
+        latitude: number;
+        longitude: number;
+      };
+    }[]
+  >([]);
+  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
 
   const cities = [
     { name: 'New York', coords: [-74.006, 40.7128] },
@@ -26,23 +37,25 @@ export default function App() {
       .catch((err) => console.error('❌ Proxy not working:', err));
   }, []);
 
-  const fetchPlacesNear = async (lng: number, lat: number, query: string) => {
-    const accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
+  const fetchCityAttractions = async (query: string) => {
+    console.log('Searching for:', query);
 
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=${lng},${lat}&limit=10&access_token=${accessToken}`
-    );
-
-    const data = await response.json();
-    console.log('Nearby places:', data.features);
-
-    //Drop markers for each result
-    data.features.forEach((place) => {
-      new mapboxgl.Marker({ color: '#FF5733' })
-        .setLngLat(place.center)
-        .setPopup(new mapboxgl.Popup().setText(place.place_name))
-        .addTo(mapRef.current);
+    const request = await fetch('http://localhost:3000/api/recommendations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userQuery: query }),
     });
+
+    if (!request.ok) {
+      throw new Error(`HTTP error! Status: ${request.status}`);
+    }
+
+    const data = await request.json();
+    const parsedMessage = JSON.parse(data.message);
+    setMainAttractionz(parsedMessage.mainAttractions);
+    fetchMapApi(parsedMessage.city);
   };
 
   const flyToLocation = (lng, lat) => {
@@ -55,6 +68,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Searching for:', inputValue);
+    await fetchCityAttractions(inputValue);
 
     const request = await fetch('http://localhost:3000/api/recommendations', {
       method: 'POST',
@@ -70,6 +84,27 @@ export default function App() {
     }
 
     const data = await request.json();
+
+    //console.log('Response from OpenAI:', data);
+    //console.log('JSON string', data.message);
+    //console.log(typeof data.message);
+    const parsedMessage = JSON.parse(data.message);
+    setMainAttractionz(parsedMessage.mainAttractions); // Set mainAttractionz to parsedMessage.mainAttractions;
+    console.log(mainAttractionz);
+
+    // const mainAttractionsList = mainAttractions.map((attraction) => {
+    //   return `<li>${attraction}</li>`;
+    // });
+    // console.log('Main attractions list:', mainAttractionsList);
+    // const mainAttractionsHTML = `<ul>${mainAttractionsList.join('')}</ul>`;
+    // console.log('Main attractions HTML:', mainAttractionsHTML);
+    // const mainAttractionsContainer = document.createElement('div');
+    // mainAttractionsContainer.innerHTML = mainAttractionsHTML;
+    // const popup = new mapboxgl.Popup()
+    //   .setLngLat(mapRef.current.getCenter())
+    //   .setHTML(mainAttractionsContainer.innerHTML)
+    //   .addTo(mapRef.current);
+    // console.log('Popup:', popup);
 
     const cityInfo = JSON.parse(data.message);
     const { city, mainAttractions } = cityInfo;
@@ -95,7 +130,7 @@ export default function App() {
       const [lng, lat] = data.features[0].center;
 
       // Move the map
-      mapRef.current.flyTo({ center: [lng, lat], zoom: 12 });
+      //mapRef.current.flyTo({ center: [lng, lat], zoom: 12 });
 
       // Drop a marker
       new mapboxgl.Marker().setLngLat([lng, lat]).addTo(mapRef.current);
@@ -119,6 +154,50 @@ export default function App() {
 
     return () => map.remove(); // Clean up on unmount
   }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || mainAttractionz.length === 0) return;
+
+    // 1. Clear old markers
+    markers.forEach((marker) => marker.remove());
+
+    const bounds = new mapboxgl.LngLatBounds();
+    const newMarkers: mapboxgl.Marker[] = [];
+
+    // 2. Add new markers
+    mainAttractionz.forEach((place) => {
+      const lngLat = [place.coordinates.longitude, place.coordinates.latitude];
+
+      bounds.extend(lngLat);
+
+      const marker = new mapboxgl.Marker({ color: '#FF5733' })
+        .setLngLat(lngLat)
+        .setPopup(
+          new mapboxgl.Popup().setHTML(
+            `<div style="color: black;">
+            <strong>${place.name}</strong><br>${place.reason}
+          </div>`
+          )
+        )
+        .addTo(mapRef.current);
+
+      newMarkers.push(marker);
+    });
+
+    mapRef.current.fitBounds(bounds, { padding: 50 });
+
+    // 3. Save marker references for cleanup next time
+    setMarkers(newMarkers);
+  }, [mainAttractionz]);
+
+  // Add the markers for the main attractions
+  // mainAttractionz.forEach((place) => {
+  //   new mapboxgl.Marker({ color: '#FF5733' })
+  //     .setLngLat([place.coordinates.longitude, place.coordinates.latitude])
+  //     .setPopup(new mapboxgl.Popup().setText(place.name))
+  //     .addTo(mapRef.current);
+  // });
+
   // useEffect(() => {
   //   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   //   console.log('Google Maps API key:', googleMapsApiKey);
@@ -187,24 +266,36 @@ export default function App() {
                     {cities.map((city) => (
                       <button
                         key={city.name}
-                        onClick={() =>
-                          flyToLocation(...(city.coords as [number, number]))
-                        }
+                        className='button'
+                        onClick={() => {
+                          setInputValue(city.name);
+                          fetchCityAttractions(city.name);
+                        }}
                       >
                         {city.name}
                       </button>
                     ))}
                   </div>
+                  <ol className='main-attractions-list'>
+                    {mainAttractionz.map((place, index) => (
+                      <li key={index}>
+                        <strong>{place.name}:</strong> {place.reason}
+                      </li>
+                    ))}
+                  </ol>
                 </div>
                 <div className='form-container'>
-                  <form onSubmit={handleSubmit}>
+                  <form onSubmit={handleSubmit} className='search-wrapper'>
                     <input
                       type='text'
-                      placeholder='Enter a location...'
+                      className='search-input'
+                      placeholder='Search or ask about any place...'
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                     />
-                    <button type='submit'>Search</button>
+                    <button className='search-button' type='submit'>
+                      ↑
+                    </button>
                   </form>
                 </div>
               </div>
