@@ -56,6 +56,31 @@ export default function App() {
     e.preventDefault();
     console.log('Searching for:', inputValue);
 
+    const request = await fetch('http://localhost:3000/api/recommendations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userQuery: inputValue }),
+    });
+
+    if (!request.ok) {
+      // If the response status code is not in the 200–299 range
+      throw new Error(`HTTP error! Status: ${request.status}`);
+    }
+
+    const data = await request.json();
+
+    const cityInfo = JSON.parse(data.message);
+    const { city, mainAttractions } = cityInfo;
+
+    fetchMapApi(city);
+
+    //    if (data.features && data.features.length > 0) {
+    //     const [lng, lat] = data.features[0].center;
+  };
+
+  const fetchMapApi = async (inputValue: string) => {
     const accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
 
     const response = await fetch(
